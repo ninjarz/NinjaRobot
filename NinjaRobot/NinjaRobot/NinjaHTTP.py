@@ -1,4 +1,4 @@
-import urllib.parse
+﻿import urllib.parse
 import urllib.request
 from urllib.error import URLError, HTTPError
 import http.cookiejar
@@ -19,10 +19,10 @@ class NinjaHTTP(object):
         urllib.request.install_opener(opener)
         pass
 
-    def get(self, url, **headers):
+    def get(self, url, timeout=120, **headers):
         try:
             req = urllib.request.Request(url, None, headers)
-            response = urllib.request.urlopen(req, timeout=120)
+            response = urllib.request.urlopen(req, timeout=timeout)
             return response.read().decode("UTF-8")
         except HTTPError as e:
             print('error:', e.read())
@@ -30,12 +30,12 @@ class NinjaHTTP(object):
         except:
             return ''
 
-    def post(self, url, params={}, **headers):
+    def post(self, url, params={}, timeout=120, **headers):
         try:
             data = urllib.parse.urlencode(params)
             data = data.encode('UTF-8')
             req = urllib.request.Request(url, data, headers)
-            response = urllib.request.urlopen(req, timeout=120)
+            response = urllib.request.urlopen(req, timeout=timeout)
             return response.read().decode("UTF-8")
         except HTTPError as e:
             print('error:', e.read())

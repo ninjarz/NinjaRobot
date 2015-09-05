@@ -1,4 +1,4 @@
-import os
+﻿import os
 import time
 import datetime
 import random
@@ -8,7 +8,8 @@ from NinjaHTTP import *
 
 
 class NinjaHandle(object):
-    def __init__(self):
+    def __init__(self, robot):
+        self.robot = robot
         self.request = NinjaHTTP()
 
         self.ptwebqq = ''
@@ -22,6 +23,7 @@ class NinjaHandle(object):
 
         pass
 
+    # ----------------------------------------------------------------------------------------------------
     def login(self):
         # login msg
         # ----------------------------------------------------------------------------------------------------
@@ -91,8 +93,6 @@ class NinjaHandle(object):
             return True
 
     def process(self):
-        # get msg
-        # ----------------------------------------------------------------------------------------------------
         while True:
             params = {
                 'r': '{{"psessionid":"{0}","ptwebqq":"{1}","clientid":{2},"key":""}}'.format(self.psession_id, self.ptwebqq, self.client_id)
@@ -101,7 +101,7 @@ class NinjaHandle(object):
             if page_str == '':
                 time.sleep(0.1)
                 continue
-            # print('msg:', page_str)
+            print('msg:', page_str)
             result = json.loads(page_str)
 
             # empty
@@ -117,37 +117,36 @@ class NinjaHandle(object):
             elif result['retcode'] == 0:
                 result = result['result'][0]
                 msg_type = result['poll_type']
-                if msg_type in self.__dict__:
-                    self.__dict__[msg_type].__get__(self, NinjaHandle)(result)
+                if msg_type in NinjaHandle.__dict__:
+                    NinjaHandle.__dict__[msg_type].__get__(self, NinjaHandle)(result)
             else:
                 continue
 
     # get
     # ----------------------------------------------------------------------------------------------------
-    def message(self):
+    def message(self, msg):
         pass
 
-    def sess_message(self):
+    def sess_message(self, msg):
         pass
 
     def group_message(self, msg):
-        group_uin = msg['value']['from_uin']
-        self.send_to_group(group_uin, 'xixi')
+        self.robot.push_group_message(GroupMessage(msg))
         pass
 
-    def discu_message(self):
+    def discu_message(self, msg):
         pass
 
-    def kick_message(self):
+    def kick_message(self, msg):
         pass
 
-    def buddies_status_change(self):
+    def buddies_status_change(self, msg):
         pass
 
-    def input_notify(self):
+    def input_notify(self, msg):
         pass
 
-    def tips(self):
+    def tips(self, msg):
         pass
 
     # send
@@ -155,7 +154,7 @@ class NinjaHandle(object):
     def send_to_group(self, uin, msg):
         r_info = {
             "group_uin": uin,
-            "content": '[\"{0}\",[\"font\",{{\"name\":\"宋体\",\"size\":10,\"style\":[0,0,0],\"color\":\"000000\"}}]]'.format(msg),
+            "content": '["{0}",["font",{{"name":"宋体","size":10,"style":[0,0,0],"color":"000000"}}]]'.format(msg.replace("\\", "\\\\")),
             "face": 588,
             "clientid": self.client_id,
             "msg_id": self.msg_id,
@@ -165,6 +164,7 @@ class NinjaHandle(object):
             'r': json.dumps(r_info),
         }
         page_str = self.request.post(config['send_group_url'], params, Referer=config['referer'])
+        print("send result:", page_str)
         self.msg_id += 1
 
     def get_id(self, uin):
@@ -186,4 +186,34 @@ class NinjaHandle(object):
         if result is None:
             return ''
         return result.group(1)
+
+
+class GroupMessage(object):
+    def __init__(self, msg):
+        value = msg['value']
+        self.msg_id = value['msg_id']
+        self.from_uin = value['from_uin']
+        self.to_uin = value['to_uin']
+        self.msg_id2 = value['msg_id2']
+        self.msg_type = value['msg_type']
+        self.reply_ip = value['reply_ip']
+        self.group_code = value['group_code']
+        self.send_uin = value['send_uin']
+        self.seq = value['seq']
+        self.time = value['time']
+        self.info_seq = value['info_seq']
+
+        self.content = ''
+        for content in value['content']:
+            if isinstance(content, list):
+                if content[0] == "font":
+                    self.font = content
+                elif content[0] == "face":
+                    self.content += '[表情]'
+                elif content[0] == "cface":
+                    self.content += '[表情]'
+                else:
+                    self.content += '[Unknown]'
+            else:
+                self.content += content
 
