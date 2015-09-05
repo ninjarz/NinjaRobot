@@ -31,6 +31,9 @@
     <Compile Include="NinjaMemory.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="NinjaNLP.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="NinjaQueue.py">
       <SubType>Code</SubType>
     </Compile>

@@ -1,4 +1,4 @@
-import threading
+﻿import threading
 
 from NinjaQueue import *
 from NinjaHandler import *
@@ -15,6 +15,7 @@ class NinjaRobot(object):
         self.group_msg_queue = NinjaQueue()
         pass
 
+    # ----------------------------------------------------------------------------------------------------
     def run(self):
         self.handler.login()
         self.handler_thread.start()

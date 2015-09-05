@@ -99,7 +99,7 @@ class NinjaHandle(object):
             }
             page_str = self.request.post(config['msg_url'], params, Referer=config['referer'])
             if page_str == '':
-                time.sleep(0.1)
+                time.sleep(config['handler_speed'])
                 continue
             print('msg:', page_str)
             result = json.loads(page_str)

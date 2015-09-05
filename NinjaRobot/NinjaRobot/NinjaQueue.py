@@ -1,4 +1,4 @@
-import threading
+﻿import threading
 
 class NinjaQueue(object):
     class Unit(object):
@@ -12,6 +12,7 @@ class NinjaQueue(object):
         self.list_head = None
         self.list_tail = None
 
+    # ----------------------------------------------------------------------------------------------------
     def empty(self):
         if self.list_head is None:
             return True
