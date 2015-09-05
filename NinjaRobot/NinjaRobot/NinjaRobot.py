@@ -3,6 +3,7 @@
 from NinjaQueue import *
 from NinjaHandler import *
 from NinjaHeart import *
+from NinjaCommand import *
 
 class NinjaRobot(object):
     def __init__(self):
@@ -10,6 +11,7 @@ class NinjaRobot(object):
         self.handler_thread = threading.Thread(target=self.handler.process)
         self.heart = NinjaHeart(self)
         self.heart_thread = threading.Thread(target=self.heart.process)
+        self.command = NinjaCommand(self)
 
         # data
         self.group_msg_queue = NinjaQueue()
@@ -20,9 +22,13 @@ class NinjaRobot(object):
         self.handler.login()
         self.handler_thread.start()
         self.heart_thread.start()
+        self.command.process()
 
     # data
     # ----------------------------------------------------------------------------------------------------
+    def load_config(self):
+        load_config()
+
     def push_group_message(self, msg):
         self.group_msg_queue.push(msg)
 
@@ -33,6 +39,11 @@ class NinjaRobot(object):
     # ----------------------------------------------------------------------------------------------------
     def send_to_group(self, uin, msg):
         self.handler.send_to_group(uin, msg)
+
+    # heart
+    # ----------------------------------------------------------------------------------------------------
+    def load_reply(self):
+        self.heart.load_reply()
 
 
 

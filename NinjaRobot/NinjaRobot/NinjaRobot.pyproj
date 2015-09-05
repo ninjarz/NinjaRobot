@@ -23,6 +23,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Config.py" />
+    <Compile Include="NinjaCommand.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="NinjaHandler.py" />
     <Compile Include="NinjaHeart.py">
       <SubType>Code</SubType>
@@ -39,6 +42,12 @@
     </Compile>
     <Compile Include="NinjaRobot.py" />
     <Compile Include="Run.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Data\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Data\Reply.json" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

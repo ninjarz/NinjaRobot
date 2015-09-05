@@ -1,5 +1,7 @@
 ﻿# default
 config = {
+    'nlp_data_path': 'Data/Reply.json',
+
     'smart_qq_url': 'http://w.qq.com/login.html',
     'qrcode_url': 'https://ssl.ptlogin2.qq.com/ptqrshow?appid={0}&e=0&l=L&s=8&d=72&v=4',
     'qrcode_path': './qrcode.jpg',
