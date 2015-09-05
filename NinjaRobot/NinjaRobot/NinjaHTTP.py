@@ -1,6 +1,6 @@
 ﻿import urllib.parse
 import urllib.request
-from urllib.error import URLError, HTTPError
+import urllib.error
 import http.cookiejar
 import re
 import json
@@ -24,7 +24,7 @@ class NinjaHTTP(object):
             req = urllib.request.Request(url, None, headers)
             response = urllib.request.urlopen(req, timeout=timeout)
             return response.read().decode("UTF-8")
-        except HTTPError as e:
+        except urllib.error.HTTPError as e:
             print('error:', e.read())
             return ''
         except:
@@ -37,7 +37,7 @@ class NinjaHTTP(object):
             req = urllib.request.Request(url, data, headers)
             response = urllib.request.urlopen(req, timeout=timeout)
             return response.read().decode("UTF-8")
-        except HTTPError as e:
+        except urllib.error.HTTPError as e:
             print('error:', e.read())
             return ''
         except:
