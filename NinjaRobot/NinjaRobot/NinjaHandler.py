@@ -12,15 +12,16 @@ class NinjaHandle(object):
         self.robot = robot
         self.request = NinjaHTTP()
 
+        self.uin = 0
         self.ptwebqq = ''
         self.vfwebqq = ''
-        self.client_id = int(random.uniform(11111111, 88888888))
         self.psession_id = ''
+        self.client_id = int(random.uniform(11111111, 88888888))
         self.msg_id = int(random.uniform(11111111, 88888888))
 
         # info
-        self.id_map = {}
-
+        self.self_info = None
+        self.uin_map = {}
         pass
 
     # ----------------------------------------------------------------------------------------------------
@@ -47,12 +48,12 @@ class NinjaHandle(object):
 
         # login
         # ----------------------------------------------------------------------------------------------------
-        start_time = int(time.mktime(datetime.datetime.utcnow().timetuple())) * 1000
+        start_time = self.get_current_time()
         # download qrcode
         self.request.download(config['qrcode_url'].format(appid), config['qrcode_path'])
         # verification
         while True:
-            current_time = int(time.mktime(datetime.datetime.utcnow().timetuple())) * 1000
+            current_time = self.get_current_time()
             page_str = self.request.get(config['qrcode_login_url'].format(appid, current_time - start_time, mibao_css, js_ver, sign), Referer=login_url)
             print('login result:', page_str)
             result = page_str.split("'")
@@ -78,7 +79,7 @@ class NinjaHandle(object):
             params = {
                 'r': '{{"ptwebqq":"{0}","clientid":{1},"psessionid":"{2}","status":"online"}}'.format(self.ptwebqq, self.client_id, self.psession_id),
             }
-            page_str = self.request.post(config['qrcode_authorize_url'], params, Referer=config['referer'])
+            page_str = self.request.post(config['qrcode_login2_url'], params, Referer=config['referer'])
             if page_str == '':
                 time.sleep(2)
                 continue
@@ -87,12 +88,17 @@ class NinjaHandle(object):
             if result['retcode'] != 0:
                 break
             # success
+            self.uin = result['result']['uin']
             self.vfwebqq = result['result']['vfwebqq']
             self.psession_id = result['result']['psessionid']
             print('login success')
             return True
 
     def process(self):
+        self.get_self_info()
+        self.get_group_list()
+
+        # loop
         while True:
             params = {
                 'r': '{{"psessionid":"{0}","ptwebqq":"{1}","clientid":{2},"key":""}}'.format(self.psession_id, self.ptwebqq, self.client_id)
@@ -115,14 +121,14 @@ class NinjaHandle(object):
                 continue
             # msg
             elif result['retcode'] == 0:
-                result = result['result'][0]
-                msg_type = result['poll_type']
-                if msg_type in NinjaHandle.__dict__:
-                    NinjaHandle.__dict__[msg_type].__get__(self, NinjaHandle)(result)
+                for result in result['result']:
+                    msg_type = result['poll_type']
+                    if msg_type in NinjaHandle.__dict__:
+                        NinjaHandle.__dict__[msg_type].__get__(self, NinjaHandle)(result)
             else:
                 continue
 
-    # get
+    # receive
     # ----------------------------------------------------------------------------------------------------
     def message(self, msg):
         pass
@@ -151,10 +157,51 @@ class NinjaHandle(object):
 
     # send
     # ----------------------------------------------------------------------------------------------------
+    def get_self_info(self):
+        page_str = self.request.get(config['get_self_info_url'].format(self.get_current_time()), Referer=config['referer'])
+        if page_str == '':
+            return False
+        result = json.loads(page_str)
+        if result['retcode'] != 0:
+            return False
+        result = result['result']
+        print("self info:", result)
+        self.self_info = SelfInfo(result)
+        return True
+
+    def get_uin_info(self, uin):
+        page_str = self.request.get(config['get_uin_info_url'].format(uin, self.vfwebqq), Referer=config['referer'])
+        if page_str == '':
+            return False
+        result = json.loads(page_str)
+        if result['retcode'] != 0:
+            return False
+        print("id info:", result)
+        self.uin_map[uin] = result['result']['account']
+        return True
+
+    def get_group_list(self):
+        params = {
+            'r': {
+                'vfwebqq': self.vfwebqq,
+                'hash': self.get_hash(self.uin, self.ptwebqq)
+            }
+        }
+        print(params['r']['hash'])
+        page_str = self.request.post(config['get_group_list_url'], params, Referer=config['referer'])
+        if page_str == '':
+            return False
+        print("get group result:", page_str)
+        result = json.loads(page_str)
+        if result['retcode'] != 0:
+            return False
+        return True
+
     def send_to_group(self, uin, msg):
+        msg.replace("\\", "\\\\")
         r_info = {
             "group_uin": uin,
-            "content": '["{0}",["font",{{"name":"宋体","size":10,"style":[0,0,0],"color":"000000"}}]]'.format(msg.replace("\\", "\\\\")),
+            "content": '["{0}",["font",{{"name":"宋体","size":10,"style":[0,0,0],"color":"000000"}}]]'.format(msg),
             "face": 588,
             "clientid": self.client_id,
             "msg_id": self.msg_id,
@@ -164,28 +211,75 @@ class NinjaHandle(object):
             'r': json.dumps(r_info),
         }
         page_str = self.request.post(config['send_group_url'], params, Referer=config['referer'])
-        print("send result:", page_str)
-        self.msg_id += 1
-
-    def get_id(self, uin):
-        page_str = self.request.get(config['get_uin_url'].format(uin, self.vfwebqq), Referer=config['referer'])
         if page_str == '':
             return False
         result = json.loads(page_str)
         if result['retcode'] != 0:
             return False
-        print("id info:", result)
-        self.id_map[uin] = result['result']['account']
-        return True
+        print("send to group result:", result)
+        self.msg_id += 1
 
     # tools
     # ----------------------------------------------------------------------------------------------------
+    @staticmethod
+    def get_current_time():
+        return int(time.mktime(datetime.datetime.utcnow().timetuple())) * 1000
+
     @staticmethod
     def get_page_info(page, pattern):
         result = re.search(pattern, page)
         if result is None:
             return ''
         return result.group(1)
+
+    @staticmethod
+    def get_hash(uin, ptwebqq):
+        uin = int(uin)
+        n = [0, 0, 0, 0]
+        for i in range(0, len(ptwebqq)):
+            n[i % 4] ^= ord(ptwebqq[i]);
+        u = ["EC", "OK"]
+        v = []
+        v.append(uin >> 24 & 255 ^ ord(u[0][0]))
+        v.append(uin >> 16 & 255 ^ ord(u[0][1]))
+        v.append(uin >> 8 & 255 ^ ord(u[1][0]))
+        v.append(uin & 255 ^ ord(u[1][1]))
+        u = []
+        for i in range(0, 8):
+            u.append(n[i >> 1] if i % 2 == 0 else v[i >> 1])
+        n = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
+        v = ""
+        for i in range(0, len(u)):
+            v += n[u[i] >> 4 & 15]
+            v += n[u[i] & 15]
+        return v
+
+
+class SelfInfo(object):
+    def __init__(self, msg):
+        self.account = msg['account']
+        self.allow = msg['allow']
+        self.birthday = msg['birthday']
+        self.blood = msg['blood']
+        self.city = msg['city']
+        self.college = msg['college']
+        self.constel = msg['constel']
+        self.country = msg['country']
+        self.email = msg['email']
+        self.face = msg['face']
+        self.gender = msg['gender']
+        self.homepage = msg['homepage']
+        self.lnick = msg['lnick']
+        self.mobile = msg['mobile']
+        self.nick = msg['nick']
+        self.occupation = msg['occupation']
+        self.personal = msg['personal']
+        self.phone = msg['phone']
+        self.province = msg['province']
+        self.shengxiao = msg['shengxiao']
+        self.uin = msg['uin']
+        self.vfwebqq = msg['vfwebqq']
+        self.vip_info = msg['vip_info']
 
 
 class GroupMessage(object):

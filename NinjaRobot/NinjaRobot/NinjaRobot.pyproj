@@ -42,12 +42,16 @@
     </Compile>
     <Compile Include="NinjaRobot.py" />
     <Compile Include="Run.py" />
+    <Compile Include="Test.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Data\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Data\Reply.json" />
+    <Content Include="20150907code.js" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
