@@ -23,9 +23,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Config.py" />
-    <Compile Include="NinjaCommand.py">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="NinjaCommand.py" />
     <Compile Include="NinjaHandler.py" />
     <Compile Include="NinjaHeart.py">
       <SubType>Code</SubType>

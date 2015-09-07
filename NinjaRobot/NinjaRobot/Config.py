@@ -15,7 +15,7 @@ config = {
 
     # msg
     'msg_url': 'http://d.web2.qq.com/channel/poll2',
-    'get_vfwebqq': 'http://s.web2.qq.com/api/getvfwebqq?ptwebqq={0}&clientid={1}&psessionid={2}&t={3}'
+    'get_vfwebqq': 'http://s.web2.qq.com/api/getvfwebqq?ptwebqq={0}&clientid={1}&psessionid={2}&t={3}',
     # user
     'get_self_info_url': 'http://s.web2.qq.com/api/get_self_info2?t={0}',
     'get_uin_info_url': 'http://s.web2.qq.com/api/get_friend_uin2?tuin={0}&type=1&vfwebqq={1}',
