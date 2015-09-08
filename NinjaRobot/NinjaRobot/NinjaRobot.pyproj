@@ -48,6 +48,7 @@
     <Folder Include="Data\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Data\Dict.txt" />
     <Content Include="Data\Reply.json" />
     <Content Include="20150907code.js" />
   </ItemGroup>

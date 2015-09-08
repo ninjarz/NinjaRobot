@@ -1,7 +1,8 @@
 ﻿# default
 config = {
     # data
-    'nlp_data_path': 'Data/Reply.json',
+    'dict_path': 'Data/Dict.txt',
+    'reply_path': 'Data/Reply.json',
     'handler_speed': 0.1,
     'heart_speed': 0.1,
 
