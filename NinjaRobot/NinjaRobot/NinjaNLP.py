@@ -5,6 +5,7 @@ import string
 
 from Config import *
 
+# MMSeg
 # text ->> sentence -> chunks -> chunk
 class NinjaNLP(object):
     class Word(object):
@@ -16,7 +17,7 @@ class NinjaNLP(object):
     class Chunk(object):
         def __init__(self, word=None):
             self.words = words
-      
+
         def total_length(self):
             length = 0
             for word in self.words:
@@ -50,18 +51,36 @@ class NinjaNLP(object):
         def __iter__(self):
             while True:
                 sentence = self.get_sentence()
-                if sentence == None:
+                if sentence is None:
                     raise StopIteration
                 yield sentence
 
         def get_sentence(self):
-            pass
+            while self.pos < self.length:
+                if self.data[self.pos] not in string.whitespace and self.data[self.pos]  not in string.punctuation:
+                    break
+                self.pos += 1
+            if self.pos >= self.length:
+                return None
+
+            begin = self.pos
+            if self.is_chinese(self.data[self.pos]):
+                while self.pos < self.length and self.is_chinese(self.data[self.pos]):
+                    self.pos += 1
+            elif self.is_ASCII(self.data[self.pos]):
+
+                while self.pos < self.length and self.is_ASCII(self.data[self.pos]):
+                    self.pos += 1
+            else:
+                return None
+
+            return self.data[begin:self.pos]
 
         @staticmethod
         def is_ASCII(ch):
             if ch in string.whitespace:
                 return False
-            if ch in string.punctuation:
+            elif ch in string.punctuation:
                 return False
             return ch in string.printable
 
@@ -116,11 +135,16 @@ class NinjaNLP(object):
 
     # ----------------------------------------------------------------------------------------------------
     def parse(self, text):
-        unknown_list = self.reply_data['unknown']
-        num = len(unknown_list)
-        if num != 0:
-            return unknown_list[random.randint(0, num - 1)]
-        return '• ^ •'
+        text = Text(text)
+        for sentence in text:
+            pass
+
+        # unknown_list = self.reply_data['unknown']
+        # num = len(unknown_list)
+        # if num != 0:
+        #     return unknown_list[random.randint(0, num - 1)]
+        # return '• ^ •'
+        pass
 
     # data
     # ----------------------------------------------------------------------------------------------------

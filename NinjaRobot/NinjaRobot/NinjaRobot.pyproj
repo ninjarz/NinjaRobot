@@ -12,6 +12,8 @@
     <OutputPath>.</OutputPath>
     <Name>NinjaRobot</Name>
     <RootNamespace>NinjaRobot</RootNamespace>
+    <InterpreterId>{9a7a9026-48c1-4688-9d5d-e5699d47d074}</InterpreterId>
+    <InterpreterVersion>3.4</InterpreterVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -51,6 +53,9 @@
     <Content Include="Data\Dict.txt" />
     <Content Include="Data\Reply.json" />
     <Content Include="20150907code.js" />
+  </ItemGroup>
+  <ItemGroup>
+    <InterpreterReference Include="{9a7a9026-48c1-4688-9d5d-e5699d47d074}\3.4" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
