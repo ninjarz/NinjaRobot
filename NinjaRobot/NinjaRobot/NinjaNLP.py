@@ -2,6 +2,7 @@
 import random
 import math
 import string
+import enum
 
 from Config import *
 
@@ -15,7 +16,7 @@ class NinjaNLP(object):
             self.length = len(data)
 
     class Chunk(object):
-        def __init__(self, word=None):
+        def __init__(self, words=[]):
             self.words = words
 
         def total_length(self):
@@ -25,10 +26,14 @@ class NinjaNLP(object):
             return length
 
         def average_length(self):
+            if len(self.words) == 0:
+                return 0
             return float(self.total_length()) / len(self.words)
 
         # standard_deviation ^ 2
         def variance(self):
+            if len(self.words) == 0:
+                return 0
             average = self.average_length()
             result = 0.0
             for word in self.words:
@@ -52,10 +57,10 @@ class NinjaNLP(object):
 
         def __iter__(self):
             while True:
-                sentence = self.get_sentence()
+                sentence, type = self.get_sentence()
                 if sentence is None:
                     raise StopIteration
-                yield sentence
+                yield sentence, type
 
         def get_sentence(self):
             while self.pos < self.length:
@@ -64,20 +69,21 @@ class NinjaNLP(object):
                 else:
                     break
             if self.pos >= self.length:
-                return None
+                return None, None
 
             begin = self.pos
             if NinjaNLP.Text.is_chinese(self.data[self.pos]):
                 while self.pos < self.length and NinjaNLP.Text.is_chinese(self.data[self.pos]):
                     self.pos += 1
+                return self.data[begin:self.pos], 0
             elif NinjaNLP.Text.is_english(self.data[self.pos]):
 
                 while self.pos < self.length and NinjaNLP.Text.is_english(self.data[self.pos]):
                     self.pos += 1
+                return self.data[begin:self.pos], 1
             else:
-                return None
+                return None, None
 
-            return self.data[begin:self.pos]
 
         @staticmethod
         def is_punctuation(ch):
@@ -105,7 +111,12 @@ class NinjaNLP(object):
             return ch in NinjaNLP.Text.chinese_punctuation
 
     class Filter(object):
-        def __init__(self, chunks):
+        def __init__(self):
+            pass
+
+        def filter(self, chunks):
+            if len(chunks) == 0:
+                return None
             if len(chunks) > 1:
                 chunks = self.total_length_filter(chunks)
             if len(chunks) > 1:
@@ -147,12 +158,24 @@ class NinjaNLP(object):
         self.load_dict()
         self.reply_data = {}
         self.load_reply()
+
+        self.filter = NinjaNLP.Filter()
         pass
 
     # ----------------------------------------------------------------------------------------------------
     def parse(self, text):
         text = NinjaNLP.Text(text)
-        return ' '.join([sentence for sentence in text])
+
+        result = []
+        for sentence, type in text:
+            if type == 0:
+                chunks = self.sentence_to_chunks(sentence)
+                chunk = self.filter.filter(chunks)
+                result += chunk.words
+            elif type == 1:
+                result.append(sentence)
+        return result
+        # return ' '.join([sentence for sentence, type in text])
 
         # unknown_list = self.reply_data['unknown']
         # num = len(unknown_list)
@@ -186,3 +209,9 @@ class NinjaNLP(object):
 
     # tools
     # ----------------------------------------------------------------------------------------------------
+    def sentence_to_chunks(self, sentence):
+        return [NinjaNLP.Chunk(), NinjaNLP.Chunk()]
+        pass
+
+    def match_words(self, sentence):
+        words = []

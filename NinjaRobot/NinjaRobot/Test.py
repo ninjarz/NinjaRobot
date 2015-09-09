@@ -1,4 +1,6 @@
 ﻿from NinjaNLP import *
+from enum import Enum
+
 
 tmp = NinjaNLP()
 while True:
