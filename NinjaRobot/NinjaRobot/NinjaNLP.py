@@ -43,6 +43,8 @@ class NinjaNLP(object):
             return result
 
     class Text(object):
+        chinese_punctuation = '·×—‘’“”…、。《》『』【】！（），：；？'
+
         def __init__(self, data=''):
             self.data = data
             self.length = len(data)
@@ -57,19 +59,20 @@ class NinjaNLP(object):
 
         def get_sentence(self):
             while self.pos < self.length:
-                if self.data[self.pos] not in string.whitespace and self.data[self.pos]  not in string.punctuation:
+                if NinjaNLP.Text.is_punctuation(self.data[self.pos]):
+                    self.pos += 1
+                else:
                     break
-                self.pos += 1
             if self.pos >= self.length:
                 return None
 
             begin = self.pos
-            if self.is_chinese(self.data[self.pos]):
-                while self.pos < self.length and self.is_chinese(self.data[self.pos]):
+            if NinjaNLP.Text.is_chinese(self.data[self.pos]):
+                while self.pos < self.length and NinjaNLP.Text.is_chinese(self.data[self.pos]):
                     self.pos += 1
-            elif self.is_ASCII(self.data[self.pos]):
+            elif NinjaNLP.Text.is_english(self.data[self.pos]):
 
-                while self.pos < self.length and self.is_ASCII(self.data[self.pos]):
+                while self.pos < self.length and NinjaNLP.Text.is_english(self.data[self.pos]):
                     self.pos += 1
             else:
                 return None
@@ -77,7 +80,16 @@ class NinjaNLP(object):
             return self.data[begin:self.pos]
 
         @staticmethod
-        def is_ASCII(ch):
+        def is_punctuation(ch):
+            if ch in string.whitespace:
+                return True
+            elif ch in string.punctuation:
+                return True
+            elif NinjaNLP.Text.is_chinese_punctuation(ch):
+                return True
+
+        @staticmethod
+        def is_english(ch):
             if ch in string.whitespace:
                 return False
             elif ch in string.punctuation:
@@ -87,6 +99,10 @@ class NinjaNLP(object):
         @staticmethod
         def is_chinese(ch):
             return 0x4E00 <= ord(ch) <= 0x9FA5
+
+        @staticmethod
+        def is_chinese_punctuation(ch):
+            return ch in NinjaNLP.Text.chinese_punctuation
 
     class Filter(object):
         def __init__(self, chunks):
@@ -135,9 +151,8 @@ class NinjaNLP(object):
 
     # ----------------------------------------------------------------------------------------------------
     def parse(self, text):
-        text = Text(text)
-        for sentence in text:
-            pass
+        text = NinjaNLP.Text(text)
+        return ' '.join([sentence for sentence in text])
 
         # unknown_list = self.reply_data['unknown']
         # num = len(unknown_list)

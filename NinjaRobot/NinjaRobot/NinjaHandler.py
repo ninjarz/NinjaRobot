@@ -15,6 +15,7 @@ class NinjaHandle(object):
         self.uin = 0
         self.ptwebqq = ''
         self.vfwebqq = ''
+        self.vfwebqq_inner = ''
         self.psession_id = ''
         self.client_id = int(random.uniform(11111111, 88888888))
         self.msg_id = int(random.uniform(11111111, 88888888))
@@ -22,6 +23,7 @@ class NinjaHandle(object):
         # info
         self.self_info = None
         self.uin_map = {}
+        self.group_map = {}
         pass
 
     # ----------------------------------------------------------------------------------------------------
@@ -95,6 +97,7 @@ class NinjaHandle(object):
             return True
 
     def process(self):
+        self.get_vfwebqq()
         self.get_self_info()
         self.get_group_list()
 
@@ -117,8 +120,6 @@ class NinjaHandle(object):
             elif result['retcode'] == 116:
                 self.ptwebqq = result['p']
                 continue
-            elif result['retcode'] == 102:
-                continue
             # msg
             elif result['retcode'] == 0:
                 for result in result['result']:
@@ -137,7 +138,7 @@ class NinjaHandle(object):
         pass
 
     def group_message(self, msg):
-        self.robot.push_group_message(GroupMessage(msg))
+        self.robot.push_group_message(GroupMessage(self.group_map[msg['value']['from_uin']], msg))
         pass
 
     def discu_message(self, msg):
@@ -157,15 +158,27 @@ class NinjaHandle(object):
 
     # send
     # ----------------------------------------------------------------------------------------------------
+    def get_vfwebqq(self):
+        page_str = self.request.get(config['get_vfwebqq_url'].format(self.ptwebqq, self.client_id, self.psession_id,self.get_current_time()), Referer=config['referer'])
+        if page_str == '':
+            return False
+        result = json.loads(page_str)
+        print("get vfwebqq result:", result)
+        if result['retcode'] != 0:
+            return False
+        result = result['result']
+        self.vfwebqq_inner = result['vfwebqq']
+        return True
+
     def get_self_info(self):
         page_str = self.request.get(config['get_self_info_url'].format(self.get_current_time()), Referer=config['referer'])
         if page_str == '':
             return False
         result = json.loads(page_str)
+        print("get self info result:", result)
         if result['retcode'] != 0:
             return False
         result = result['result']
-        print("self info:", result)
         self.self_info = SelfInfo(result)
         return True
 
@@ -174,32 +187,48 @@ class NinjaHandle(object):
         if page_str == '':
             return False
         result = json.loads(page_str)
+        print("get id info result:", result)
         if result['retcode'] != 0:
             return False
-        print("id info:", result)
         self.uin_map[uin] = result['result']['account']
         return True
 
     def get_group_list(self):
         params = {
-            'r': {
-                'vfwebqq': self.vfwebqq,
+            'r': json.dumps({
+                'vfwebqq': self.vfwebqq_inner,
                 'hash': self.get_hash(self.uin, self.ptwebqq)
-            }
+            })
         }
-        print(params['r']['hash'])
         page_str = self.request.post(config['get_group_list_url'], params, Referer=config['referer'])
         if page_str == '':
             return False
-        print("get group result:", page_str)
         result = json.loads(page_str)
+        print("get group list result:", result)
         if result['retcode'] != 0:
             return False
+        # get info
+        result = result['result']
+        for group in result['gnamelist']:
+            self.get_group_info(group['code'])
+        return True
+
+    def get_group_info(self, gcode):
+        page_str = self.request.get(config['get_group_info_url'].format(gcode, self.vfwebqq_inner, self.get_current_time()), Referer=config['referer'])
+        if page_str == '':
+            return False
+        result = json.loads(page_str)
+        print("get group info result:", result)
+        if result['retcode'] != 0:
+            return False
+        # get info
+        result = result['result']
+        self.group_map[result['ginfo']['gid']] = GroupInfo(result)
         return True
 
     def send_to_group(self, uin, msg):
         msg.replace("\\", "\\\\")
-        r_info = {
+        r_value = {
             "group_uin": uin,
             "content": '["{0}",["font",{{"name":"宋体","size":10,"style":[0,0,0],"color":"000000"}}]]'.format(msg),
             "face": 588,
@@ -208,15 +237,15 @@ class NinjaHandle(object):
             "psessionid": self.psession_id
         }
         params = {
-            'r': json.dumps(r_info),
+            'r': json.dumps(r_value),
         }
         page_str = self.request.post(config['send_group_url'], params, Referer=config['referer'])
         if page_str == '':
             return False
         result = json.loads(page_str)
+        print("send to group result:", result)
         if result['retcode'] != 0:
             return False
-        print("send to group result:", result)
         self.msg_id += 1
 
     # tools
@@ -282,8 +311,18 @@ class SelfInfo(object):
         self.vip_info = msg['vip_info']
 
 
-class GroupMessage(object):
+class GroupInfo(object):
     def __init__(self, msg):
+        self.ginfo = msg['ginfo']
+        self.minfo = msg['minfo']
+        self.stats = msg['stats']
+        self.vipinfo = msg['vipinfo']
+
+
+class GroupMessage(object):
+    def __init__(self, group_info, msg):
+        self.group_info = group_info
+
         value = msg['value']
         self.msg_id = value['msg_id']
         self.from_uin = value['from_uin']
