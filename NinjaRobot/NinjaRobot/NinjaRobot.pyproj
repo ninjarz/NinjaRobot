@@ -45,12 +45,17 @@
     <Compile Include="Test.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Tools\SogouToDict.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Data\" />
+    <Folder Include="Data\Dict\" />
+    <Folder Include="Tools\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Data\Dict.txt" />
+    <Content Include="Data\Dict\Dict.txt" />
     <Content Include="Data\Reply.json" />
     <Content Include="20150907code.js" />
   </ItemGroup>

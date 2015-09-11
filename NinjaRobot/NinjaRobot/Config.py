@@ -1,7 +1,7 @@
 ﻿# default
 config = {
     # data
-    'dict_path': 'Data/Dict.txt',
+    'dict_path': 'Data/Dict/Dict.txt',
     'reply_path': 'Data/Reply.json',
     'handler_speed': 0.1,
     'heart_speed': 0.1,
@@ -33,14 +33,13 @@ config = {
 def load_config():
     global config
     try:
-        fin = open("Config", 'r')
-        lines = fin.readlines()
-        fin.close()
-        for line in lines:
-            words = line.split(' ')
-            if type(config[words[0]]) is int:
-                config[words[0]] = int(words[1])
-            else:
-                config[words[0]] = words[1]
+        with open("Config", 'r') as fin:
+            lines = fin.readlines()
+            for line in lines:
+                words = line.split(' ')
+                if type(config[words[0]]) is int:
+                    config[words[0]] = int(words[1])
+                else:
+                    config[words[0]] = words[1]
     except:
         return

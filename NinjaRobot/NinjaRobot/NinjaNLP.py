@@ -188,12 +188,11 @@ class NinjaNLP(object):
     # ----------------------------------------------------------------------------------------------------
     def load_dict(self):
         try:
-            fin = open(config['dict_path'], 'r')
-            for line in fin.readlines():
-                word, freq = line.split(' ')
-                word = unicode(word.strip(), 'utf-8')
-                self.dict_data[word] = self.Word(word, freq)
-            fin.close()
+            with open(config['dict_path'], 'r') as fin:
+                for line in fin.readlines():
+                    word, freq = line.split(' ')
+                    word = word.strip()
+                    self.dict_data[word] = self.Word(word, freq)
         except:
             print('Load dict data fail!')
             return
