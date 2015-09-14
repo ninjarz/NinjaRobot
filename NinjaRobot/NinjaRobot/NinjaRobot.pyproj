@@ -45,7 +45,7 @@
     <Compile Include="Test.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Tools\SogouToDict.py">
+    <Compile Include="Tools\ScelToDict.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
