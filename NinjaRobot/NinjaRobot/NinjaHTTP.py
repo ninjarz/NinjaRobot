@@ -24,11 +24,8 @@ class NinjaHTTP(object):
             req = urllib.request.Request(url, None, headers)
             response = urllib.request.urlopen(req, timeout=timeout)
             return response.read().decode("UTF-8")
-        except urllib.error.HTTPError as e:
-            print('error:', e.read())
-            return ''
-        except:
-            return ''
+        except Exception as e:
+            print('Error:', e)
 
     def post(self, url, params={}, timeout=120, **headers):
         try:
@@ -37,11 +34,8 @@ class NinjaHTTP(object):
             req = urllib.request.Request(url, data, headers)
             response = urllib.request.urlopen(req, timeout=timeout)
             return response.read().decode("UTF-8")
-        except urllib.error.HTTPError as e:
-            print('error:', e.read())
-            return ''
-        except:
-            return ''
+        except Exception as e:
+            print('Error:', e)
 
     def download(self, url, file_path):
         output = open(file_path, 'wb')

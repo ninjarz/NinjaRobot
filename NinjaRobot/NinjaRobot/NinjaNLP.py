@@ -2,7 +2,7 @@
 import random
 import math
 import string
-import enum
+import copy
 
 from Config import *
 
@@ -53,7 +53,7 @@ class NinjaNLP(object):
         def __init__(self, data=''):
             self.data = data
             self.length = len(data)
-            self.pos = 0;
+            self.pos = 0
 
         def __iter__(self):
             while True:
@@ -110,56 +110,12 @@ class NinjaNLP(object):
         def is_chinese_punctuation(ch):
             return ch in NinjaNLP.Text.chinese_punctuation
 
-    class Filter(object):
-        def __init__(self):
-            pass
-
-        def filter(self, chunks):
-            if len(chunks) == 0:
-                return None
-            if len(chunks) > 1:
-                chunks = self.total_length_filter(chunks)
-            if len(chunks) > 1:
-                chunks = self.average_length_filter(chunks)
-            if len(chunks) > 1:
-                chunks = self.variance_filter(chunks)
-            if len(chunks) > 1:
-                chunks = self.ln_frequency_filter(chunks)
-            return chunks[0]
-
-        def total_length_filter(self, chunks):
-            comparator = lambda x, y : x.total_length() - y.total_length()
-            return self.filter_executor(chunks, comparator)
-
-        def average_length_filter(self, chunks):
-            comparator = lambda x, y : x.average_length() - y.average_length()
-            return self.filter_executor(chunks, comparator)
-
-        def variance_filter(self, chunks):
-            comparator = lambda x, y : y.variance() - x.variance()
-            return self.filter_executor(chunks, comparator)
-
-        def ln_frequency_filter(self, chunks):  
-            comparator = lambda x, y : x.ln_frequency() - y.ln_frequency()
-            return self.filter_executor(chunks, comparator)
-
-        def filter_executor(self, chunks, comparator):
-            result = [chunks[0], ]
-            for chunk in chunks[1:]:
-                diff = comparator(result[0], chunk)
-                if diff < 0:
-                    result = [chunk, ]
-                elif diff == 0:
-                    result.append(chunk)
-            return result
-
     def __init__(self):
         self.dict_data = {}
         self.load_dict()
         self.reply_data = {}
         self.load_reply()
 
-        self.filter = NinjaNLP.Filter()
         pass
 
     # ----------------------------------------------------------------------------------------------------
@@ -167,22 +123,17 @@ class NinjaNLP(object):
         text = NinjaNLP.Text(text)
 
         result = []
+        # text ->> sentence
         for sentence, type in text:
             if type == 0:
+                # sentence -> chunks
                 chunks = self.sentence_to_chunks(sentence)
-                chunk = self.filter.filter(chunks)
-                result += chunk.words
+                # chunks -> chunk
+                chunk = self.filter(chunks)
+                result += [word.data for word in chunk.words]
             elif type == 1:
                 result.append(sentence)
         return result
-        # return ' '.join([sentence for sentence, type in text])
-
-        # unknown_list = self.reply_data['unknown']
-        # num = len(unknown_list)
-        # if num != 0:
-        #     return unknown_list[random.randint(0, num - 1)]
-        # return '• ^ •'
-        pass
 
     # data
     # ----------------------------------------------------------------------------------------------------
@@ -190,10 +141,12 @@ class NinjaNLP(object):
         try:
             with open(config['dict_path'], 'r') as fin:
                 for line in fin.readlines():
+                    line = line[:-1]
                     word, freq = line.split(' ')
                     word = word.strip()
                     self.dict_data[word] = self.Word(word, freq)
-        except:
+        except Exception as e:
+            print('Error:', e)
             print('Load dict data fail!')
             return
     
@@ -202,15 +155,76 @@ class NinjaNLP(object):
             fin = open(config['reply_path'], 'r')
             self.reply_data = json.loads(fin.read())
             fin.close()
-        except:
+        except Exception as e:
+            print('Error:', e)
             print('Load reply data fail!')
             return
 
     # tools
     # ----------------------------------------------------------------------------------------------------
     def sentence_to_chunks(self, sentence):
-        return [NinjaNLP.Chunk(), NinjaNLP.Chunk()]
-        pass
+        self.chunks = []
+        self.match_chunks(sentence)
+        return self.chunks
+
+    def match_chunks(self, sentence, chunk=Chunk()):
+        if len(sentence) == 0:
+            self.chunks.append(chunk)
+        for word in self.match_words(sentence):
+            chunk_copy = copy.deepcopy(chunk)
+            chunk_copy.words.append(word)
+            self.match_chunks(sentence[word.length:], chunk_copy)
 
     def match_words(self, sentence):
+        if len(sentence) == 0:
+            return []
+
+        pos = 1
         words = []
+        words.append(NinjaNLP.Word(sentence[0]))
+        while pos < len(sentence):
+            pos += 1
+            word = sentence[:pos]
+            if word in self.dict_data:
+                words.append(self.dict_data[word])
+        return words
+
+    def filter(self, chunks):
+        if len(chunks) == 0:
+            return None
+        if len(chunks) > 1:
+            chunks = self.total_length_filter(chunks)
+        if len(chunks) > 1:
+            chunks = self.average_length_filter(chunks)
+        if len(chunks) > 1:
+            chunks = self.variance_filter(chunks)
+        if len(chunks) > 1:
+            chunks = self.ln_frequency_filter(chunks)
+        return chunks[0]
+
+    def total_length_filter(self, chunks):
+        comparator = lambda x, y : x.total_length() - y.total_length()
+        return self.filter_executor(chunks, comparator)
+
+    def average_length_filter(self, chunks):
+        comparator = lambda x, y : x.average_length() - y.average_length()
+        return self.filter_executor(chunks, comparator)
+
+    def variance_filter(self, chunks):
+        comparator = lambda x, y : y.variance() - x.variance()
+        return self.filter_executor(chunks, comparator)
+
+    def ln_frequency_filter(self, chunks):  
+        comparator = lambda x, y : x.ln_frequency() - y.ln_frequency()
+        return self.filter_executor(chunks, comparator)
+
+    def filter_executor(self, chunks, comparator):
+        result = [chunks[0]]
+        for chunk in chunks[1:]:
+            diff = comparator(result[0], chunk)
+            if diff < 0:
+                result = [chunk]
+            elif diff == 0:
+                result.append(chunk)
+        return result
+
