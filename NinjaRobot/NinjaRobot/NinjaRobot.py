@@ -29,6 +29,13 @@ class NinjaRobot(object):
     def load_config(self):
         load_config()
 
+    def load_dict(self):
+        self.heart.load_dict()
+
+    def load_reply(self):
+        self.heart.load_reply()
+
+
     def push_group_message(self, msg):
         self.group_msg_queue.push(msg)
 

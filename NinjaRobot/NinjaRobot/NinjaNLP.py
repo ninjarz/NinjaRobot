@@ -133,7 +133,7 @@ class NinjaNLP(object):
                 result += [word.data for word in chunk.words]
             elif type == 1:
                 result.append(sentence)
-        return result
+        return ' '.join(result)
 
     # data
     # ----------------------------------------------------------------------------------------------------

@@ -7,7 +7,11 @@ class NinjaCommand(object):
     def process(self):
         while True:
             content = input('')
-            if content == 'reload':
+            if content == 'load config':
+                self.robot.load_config()
+            elif content == 'load dict':
+                self.robot.load_dict()
+            elif content == 'load reply':
                 self.robot.load_reply()
             else:
                 print('invalid command!')
