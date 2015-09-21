@@ -52,6 +52,7 @@
   <ItemGroup>
     <Folder Include="Data\" />
     <Folder Include="Data\Dict\" />
+    <Folder Include="Data\Learning\" />
     <Folder Include="Tools\" />
   </ItemGroup>
   <ItemGroup>

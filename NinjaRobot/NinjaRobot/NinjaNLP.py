@@ -48,7 +48,7 @@ class NinjaNLP(object):
             return result
 
     class Text(object):
-        chinese_punctuation = '·×—‘’“”…、。《》『』【】！（），：；？'
+        chinese_punctuations = '·×—‘’“”…、。《》『』【】！（），：；？'
 
         def __init__(self, data=''):
             self.data = data
@@ -91,7 +91,7 @@ class NinjaNLP(object):
                 return True
             elif ch in string.punctuation:
                 return True
-            elif NinjaNLP.Text.is_chinese_punctuation(ch):
+            elif NinjaNLP.Text.is_chinese_punctuations(ch):
                 return True
 
         @staticmethod
@@ -107,10 +107,15 @@ class NinjaNLP(object):
             return 0x4E00 <= ord(ch) <= 0x9FA5
 
         @staticmethod
-        def is_chinese_punctuation(ch):
-            return ch in NinjaNLP.Text.chinese_punctuation
+        def is_chinese_punctuations(ch):
+            return ch in NinjaNLP.Text.chinese_punctuations
 
+    # API
+    # ----------------------------------------------------------------------------------------------------
     def __init__(self):
+        self.isLeaning = True
+        self.minWeight = 3
+
         self.dict_data = {}
         self.load_dict()
         self.reply_data = {}
@@ -118,7 +123,6 @@ class NinjaNLP(object):
 
         pass
 
-    # ----------------------------------------------------------------------------------------------------
     def parse(self, text):
         text = NinjaNLP.Text(text)
 
@@ -140,21 +144,32 @@ class NinjaNLP(object):
     def load_dict(self):
         try:
             with open(config['dict_path'], 'r') as fin:
+                self.dict_data.clear()
                 for line in fin.readlines():
                     line = line[:-1]
                     word, freq = line.split(' ')
                     word = word.strip()
-                    self.dict_data[word] = self.Word(word, freq)
+                    self.dict_data[word] = self.Word(word, int(freq))
         except Exception as e:
             print('Error:', e)
             print('Load dict data fail!')
             return
+
+    def save_dict(self):
+        try:
+            with open(config['dict_path'], 'w') as fout:
+                for key, value in self.dict_data.items():
+                    if value.freq >= self.minWeight:
+                        fout.write(' '.join([key, str(value.freq), '\n']))
+        except Exception as e:
+            print('Error:', e)
+            print('Save dict data fail!')
+            return
     
     def load_reply(self):
         try:
-            fin = open(config['reply_path'], 'r')
-            self.reply_data = json.loads(fin.read())
-            fin.close()
+            with open(config['reply_path'], 'r') as fin:
+                self.reply_data = json.loads(fin.read())
         except Exception as e:
             print('Error:', e)
             print('Load reply data fail!')
@@ -187,6 +202,9 @@ class NinjaNLP(object):
             word = sentence[:pos]
             if word in self.dict_data:
                 words.append(self.dict_data[word])
+                self.dict_data[word].freq += 1
+            elif self.isLeaning:
+                self.dict_data[word] = NinjaNLP.Word(word, 1)
         return words
 
     def filter(self, chunks):

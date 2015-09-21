@@ -22,5 +22,8 @@ class NinjaHeart(object):
     def load_dict(self):
         self.nlp.load_dict()
 
+    def save_dict(self):
+        self.nlp.save_dict()
+
     def load_reply(self):
         self.nlp.load_reply()

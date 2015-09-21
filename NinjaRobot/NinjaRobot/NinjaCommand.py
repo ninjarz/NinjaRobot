@@ -11,6 +11,8 @@ class NinjaCommand(object):
                 self.robot.load_config()
             elif content == 'load dict':
                 self.robot.load_dict()
+            elif content == 'save dict':
+                self.robot.save_dict()
             elif content == 'load reply':
                 self.robot.load_reply()
             else:
