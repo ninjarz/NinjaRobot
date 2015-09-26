@@ -41,6 +41,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="NinjaRobot.py" />
+    <Compile Include="NinjaTool.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Run.py" />
     <Compile Include="Test.py">
       <SubType>Code</SubType>

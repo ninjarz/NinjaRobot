@@ -5,15 +5,20 @@ import string
 import copy
 
 from Config import *
+from NinjaTool import *
+
 
 # MMSeg
 # text ->> sentence -> chunks -> chunk
 class NinjaNLP(object):
     class Word(object):
-        def __init__(self, data='', freq=0):
+        def __init__(self, data='', freq=1):
             self.data = data
             self.freq = freq
             self.length = len(data)
+
+        def __lt__(self, other):
+            return self.freq < other.freq
 
     class Chunk(object):
         def __init__(self, words=[]):
@@ -48,8 +53,6 @@ class NinjaNLP(object):
             return result
 
     class Text(object):
-        chinese_punctuations = '·×—‘’“”…、。《》『』【】！（），：；？'
-
         def __init__(self, data=''):
             self.data = data
             self.length = len(data)
@@ -64,7 +67,7 @@ class NinjaNLP(object):
 
         def get_sentence(self):
             while self.pos < self.length:
-                if NinjaNLP.Text.is_punctuation(self.data[self.pos]):
+                if NinjaNLP.Text.is_nonsense(self.data[self.pos]):
                     self.pos += 1
                 else:
                     break
@@ -77,7 +80,6 @@ class NinjaNLP(object):
                     self.pos += 1
                 return self.data[begin:self.pos], 0
             elif NinjaNLP.Text.is_english(self.data[self.pos]):
-
                 while self.pos < self.length and NinjaNLP.Text.is_english(self.data[self.pos]):
                     self.pos += 1
                 return self.data[begin:self.pos], 1
@@ -86,7 +88,7 @@ class NinjaNLP(object):
 
 
         @staticmethod
-        def is_punctuation(ch):
+        def is_nonsense(ch):
             if ch in string.whitespace:
                 return True
             elif ch in string.punctuation:
@@ -108,18 +110,22 @@ class NinjaNLP(object):
 
         @staticmethod
         def is_chinese_punctuations(ch):
-            return ch in NinjaNLP.Text.chinese_punctuations
+            return ch in '·×—‘’“”…、。《》『』【】！（），：；？'
 
     # API
     # ----------------------------------------------------------------------------------------------------
     def __init__(self):
-        self.isLeaning = True
-        self.minWeight = 3
-
         self.dict_data = {}
         self.load_dict()
         self.reply_data = {}
         self.load_reply()
+        self.max_matched_words = 3
+        self.max_chunk_size = 3
+
+        # learning
+        self.isLeaning = True
+        self.learning_data = {}
+        self.min_weight = 3
 
         pass
 
@@ -134,6 +140,10 @@ class NinjaNLP(object):
                 chunks = self.sentence_to_chunks(sentence)
                 # chunks -> chunk
                 chunk = self.filter(chunks)
+                if self.isLeaning:
+                    for word in chunk.words:
+                        if word in self.dict_data:
+                            self.dict_data[word.data].freq += 1
                 result += [word.data for word in chunk.words]
             elif type == 1:
                 result.append(sentence)
@@ -159,8 +169,7 @@ class NinjaNLP(object):
         try:
             with open(config['dict_path'], 'w') as fout:
                 for key, value in self.dict_data.items():
-                    if value.freq >= self.minWeight:
-                        fout.write(' '.join([key, str(value.freq), '\n']))
+                    fout.write(' '.join([key, str(value.freq), '\n']))
         except Exception as e:
             print('Error:', e)
             print('Save dict data fail!')
@@ -185,6 +194,7 @@ class NinjaNLP(object):
     def match_chunks(self, sentence, chunk=Chunk()):
         if len(sentence) == 0:
             self.chunks.append(chunk)
+            return
         for word in self.match_words(sentence):
             chunk_copy = copy.deepcopy(chunk)
             chunk_copy.words.append(word)
@@ -202,9 +212,15 @@ class NinjaNLP(object):
             word = sentence[:pos]
             if word in self.dict_data:
                 words.append(self.dict_data[word])
-                self.dict_data[word].freq += 1
             elif self.isLeaning:
-                self.dict_data[word] = NinjaNLP.Word(word, 1)
+                if word in self.learning_data:
+                    self.learning_data[word].freq += 1
+                    if self.learning_data[word].freq >= self.min_weight:
+                        self.dict_data[word] = self.learning_data[word]
+                        self.learning_data.pop(word)
+                else:
+                    self.learning_data[word] = NinjaNLP.Word(word, 1)
+        words = get_top_n(words, self.max_matched_words)
         return words
 
     def filter(self, chunks):
@@ -213,11 +229,11 @@ class NinjaNLP(object):
         if len(chunks) > 1:
             chunks = self.total_length_filter(chunks)
         if len(chunks) > 1:
+            chunks = self.ln_frequency_filter(chunks)
+        if len(chunks) > 1:
             chunks = self.average_length_filter(chunks)
         if len(chunks) > 1:
             chunks = self.variance_filter(chunks)
-        if len(chunks) > 1:
-            chunks = self.ln_frequency_filter(chunks)
         return chunks[0]
 
     def total_length_filter(self, chunks):
