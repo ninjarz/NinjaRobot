@@ -120,7 +120,7 @@ class NinjaNLP(object):
         self.reply_data = {}
         self.load_reply()
         self.max_matched_words = 3
-        self.max_chunk_size = 3
+        # self.max_chunk_size = 3
 
         # learning
         self.isLeaning = True
@@ -156,10 +156,13 @@ class NinjaNLP(object):
             with open(config['dict_path'], 'r') as fin:
                 self.dict_data.clear()
                 for line in fin.readlines():
-                    line = line[:-1]
-                    word, freq = line.split(' ')
-                    word = word.strip()
-                    self.dict_data[word] = self.Word(word, int(freq))
+                    line = line.rstrip('\n')
+                    try:
+                        word, freq = line.split(' ')
+                        word = word.strip()
+                        self.dict_data[word] = self.Word(word, int(freq))
+                    except:
+                        continue
         except Exception as e:
             print('Error:', e)
             print('Load dict data fail!')
