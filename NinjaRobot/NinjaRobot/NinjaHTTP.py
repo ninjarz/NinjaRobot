@@ -13,7 +13,7 @@ class NinjaHTTP(object):
         opener = urllib.request.build_opener(processor)
         opener.addheaders = [
             ('Accept', '*/*'),
-            ('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.107 Safari/537.36'),
+            ('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.84 Safari/537.36'),
             ('Content-Type', 'application/x-www-form-urlencoded; charset=utf-8'),
         ]
         urllib.request.install_opener(opener)

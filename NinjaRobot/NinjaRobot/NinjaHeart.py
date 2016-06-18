@@ -1,7 +1,6 @@
 ﻿import time
 
-from Config import *
-from NinjaNLP import *
+from NinjaTools.NinjaNLP import *
 
 class NinjaHeart(object):
     def __init__(self, robot):

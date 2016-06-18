@@ -1,4 +1,4 @@
-﻿from NinjaNLP import *
+﻿from NinjaTools.NinjaNLP import *
 
 
 tmp = NinjaNLP()

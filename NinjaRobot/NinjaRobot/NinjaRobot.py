@@ -1,9 +1,8 @@
-﻿import threading
-
-from NinjaQueue import *
+﻿from NinjaCommand import *
 from NinjaHandler import *
 from NinjaHeart import *
-from NinjaCommand import *
+from NinjaTools.NinjaQueue import *
+
 
 class NinjaRobot(object):
     def __init__(self):

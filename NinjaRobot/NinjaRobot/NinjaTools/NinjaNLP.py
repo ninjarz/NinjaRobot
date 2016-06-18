@@ -1,11 +1,10 @@
-﻿import json
-import random
+﻿import copy
+import json
 import math
 import string
-import copy
 
 from Config import *
-from NinjaTool import *
+from NinjaTools.NinjaTool import *
 
 
 # MMSeg

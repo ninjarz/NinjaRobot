@@ -12,12 +12,13 @@ class NinjaHandle(object):
         self.robot = robot
         self.request = NinjaHTTP()
 
+        self.cip = 0
         self.uin = 0
         self.ptwebqq = ''
         self.vfwebqq = ''
         self.vfwebqq_inner = ''
         self.psession_id = ''
-        self.client_id = int(random.uniform(11111111, 88888888))
+        self.client_id = 53999199
         self.msg_id = int(random.uniform(11111111, 88888888))
 
         # info
@@ -28,36 +29,38 @@ class NinjaHandle(object):
 
     # ----------------------------------------------------------------------------------------------------
     def login(self):
-        # login msg
+        # prepare login
         # ----------------------------------------------------------------------------------------------------
-        # load page
+        # index page
         page_str = self.request.get(config['smart_qq_url'])
         # find login url
         login_url = self.get_page_info(page_str, r'\.src = "(.+?)"')
         page_str = self.request.get(login_url + '0')
+
         # appid
-        appid = self.get_page_info(page_str, r'var g_appid =encodeURIComponent\("(\d+)"\);')
-        print(appid)
+        appid = self.get_page_info(page_str, r'g_appid=encodeURIComponent\("(\d+)"\)')
+        print("appid:", appid)
         # sign
-        sign = self.get_page_info(page_str, r'var g_login_sig=encodeURIComponent\("(.+?)"\);')
-        print(sign)
-        # js_ver
-        js_ver = self.get_page_info(page_str, r'var g_pt_version=encodeURIComponent\("(\d+)"\);')
-        print(js_ver)
+        login_sig = self.get_page_info(page_str, r'g_login_sig=encodeURIComponent\("(.?)"\)')
+        print("sign:", login_sig)
+        # pt_version
+        pt_version = self.get_page_info(page_str, r'g_pt_version=encodeURIComponent\("(\d+)"\)')
+        print("pt_version:", pt_version)
         # mibao_css
-        mibao_css = self.get_page_info(page_str, r'var g_mibao_css=encodeURIComponent\("(.+?)"\);')
-        print(mibao_css)
+        mibao_css = self.get_page_info(page_str, r'g_mibao_css=encodeURIComponent\("(.+?)"\)')
+        print("mibao_css:", mibao_css)
 
         # login
         # ----------------------------------------------------------------------------------------------------
         start_time = self.get_current_time()
-        # download qrcode
+        # download QR
         self.request.download(config['qrcode_url'].format(appid), config['qrcode_path'])
+
         # verification
         while True:
             current_time = self.get_current_time()
-            page_str = self.request.get(config['qrcode_login_url'].format(appid, current_time - start_time, mibao_css, js_ver, sign), Referer=login_url)
-            print('login result:', page_str)
+            page_str = self.request.get(config['qrcode_login_url'].format(appid, current_time - start_time, mibao_css, pt_version, login_sig), Referer=login_url)
+            print('qrcode:', page_str)
             result = page_str.split("'")
             if result[1] == '65':
                 self.request.download(config['qrcode_url'].format(appid), config['qrcode_path'])
@@ -74,8 +77,11 @@ class NinjaHandle(object):
                     page_str = self.request.get(url)
                 break
             time.sleep(2)
+
+        # ptwebqq
         self.ptwebqq = self.request.get_cookie('ptwebqq')
         print('ptwebqq:', self.ptwebqq)
+
         # authorize
         while True:
             params = {
@@ -88,9 +94,11 @@ class NinjaHandle(object):
             print('authorize result:', page_str)
             result = json.loads(page_str)
             if result['retcode'] != 0:
-                break
+                time.sleep(2)
+                continue
+
             # success
-            self.uin = result['result']['uin']
+            self.cip = result['result']['cip']
             self.vfwebqq = result['result']['vfwebqq']
             self.psession_id = result['result']['psessionid']
             print('login success')
@@ -103,11 +111,12 @@ class NinjaHandle(object):
 
         # loop
         while True:
+            time.sleep(1)
             params = {
                 'r': '{{"psessionid":"{0}","ptwebqq":"{1}","clientid":{2},"key":""}}'.format(self.psession_id, self.ptwebqq, self.client_id)
             }
             page_str = self.request.post(config['msg_url'], params, Referer=config['referer'])
-            if page_str == '':
+            if page_str is None or page_str == '':
                 time.sleep(config['handler_speed'])
                 continue
             print('msg:', page_str)
@@ -124,8 +133,8 @@ class NinjaHandle(object):
             elif result['retcode'] == 0:
                 for result in result['result']:
                     msg_type = result['poll_type']
-                    if msg_type in NinjaHandle.__dict__:
-                        NinjaHandle.__dict__[msg_type].__get__(self, NinjaHandle)(result)
+                    #if msg_type in NinjaHandle.__dict__:
+                    #    NinjaHandle.__dict__[msg_type].__get__(self, NinjaHandle)(result)
             else:
                 continue
 
